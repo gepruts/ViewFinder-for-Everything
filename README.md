@@ -40,7 +40,7 @@ Use *Any Word* or *All Words* depending on the situation.
 
 ## Requirements
 
-1. **Everything 1.5**, minimum version **1.5.0.1401**
+1. **Everything 1.5**, minimum version **1.5.0.1402**
 2. **es: URL protocol** needs to be enabled in Everything.  
 ( under Menu => Tools => Options => General )  
 3. LAtitude and longitude need to be indexed: 
@@ -53,5 +53,5 @@ Use *Any Word* or *All Words* depending on the situation.
     7. Do the same for longitude
     8. OK
     9. Let Everything scan all matching photos for these properties
-    (progress is shown in he status bar)
+    (progress is shown in the status bar)
   
