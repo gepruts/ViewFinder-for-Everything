@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ViewFinder for Everything</title>
+
+
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+<style>
+
+	label {
+		font-family: Arial, Helvetica, sans-serif;
+	}
+	
+	#date-picker-button {
+		margin: 5px;
+		padding: 8px 8px;
+      width: 14em;
+		text-align: center;
+	}
+
+	#time-picker-button {
+		margin: 5px;
+		padding: 8px 8px;
+      width: 10em;
+		text-align: center;
+	}
+
+	#comment-field {
+		margin: 10px;
+		padding: 8px 16px;
+      width: 30em;
+		text-align: left;
+	 
+	}
+
+   #go-button {
+		margin: 10px;
+		padding: 8px 16px;
+		background-color: #04AA6D;
+		float: right;
+		text-align: center;
+   }
+
+   #map {
+      height: 90vh;
+      width: 100%;
+   }
+
+</style>
+
+</head>
+
+
+<body>
+
+<input id="date-picker-button" type="button" value="Select Date Range" title="This is the text of the tooltip &#010; Second line">
+<input id="time-picker-button" type="button" value="Select Time Range">
+<input id="comment-field" type="text" placeholder="Search for comment ...">
+
+
+<label>
+	<input type="radio" name="comment-radio" checked="checked" id="radio-all"
+			value="allwords"> All Words
+</label>
+
+<label>
+	<input type="radio" name="comment-radio" id="radio-any" 
+			value="anyword"> Any Word
+</label>
+
+
+<button id="go-button">Open in Everything</button>
+
+<div id="map"></div>
+
+
+
+
+<dialog id="date-dialog">
+  <form id="date-form" method="dialog">
+    <h3>Select Date Range</h3>
+
+    <label>
+      Start date:
+      <input type="date" id="start-date">
+    </label>
+
+    <label>
+      End date:
+      <input type="date" id="end-date">
+    </label>
+
+    <menu>
+      <button value="cancel">Cancel</button>
+      <button value="ok" id="save-date">OK</button>
+    </menu>
+  </form>
+</dialog>
+
+
+
+<dialog id="time-dialog">
+  <form id="time-form" method="dialog">
+    <h3>Select Time Range</h3>
+
+    <label>
+      Start time:
+      <input type="time" id="start-time">
+    </label>
+
+    <label>
+      End time:
+      <input type="time" id="end-time">
+    </label>
+	 
+    <menu>
+      <button value="cancel">Cancel</button>
+      <button value="ok" id="save-time">OK</button>
+    </menu>
+  </form>
+</dialog>
+
+
+
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+//				Map
+// Initialize the map centered on a default location
+	const map = L.map('map').setView([48.858093, 2.294694], 3); // Eiffel Tower in Paris
+
+// Add OpenStreetMap tiles
+	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+		attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+	}).addTo(map);
+
+
+
+
+//				Buttons
+const DATE_DIALOG = document.getElementById('date-dialog');
+const DATE_OPENBUTTON = document.getElementById('date-picker-button');
+const DATE_STARTINPUT = document.getElementById('start-date');
+const DATE_ENDINPUT = document.getElementById('end-date');
+
+
+const TIME_DIALOG = document.getElementById('time-dialog');
+const TIME_OPEN_BUTTON = document.getElementById('time-picker-button');
+const TIME_STARTINPUT = document.getElementById('start-time');
+const TIME_ENDINPUT = document.getElementById('end-time');
+
+let START_TIME = ""
+let END_TIME = ""
+
+let COMMENT_TEXT = ""
+let comments = ""
+
+DATE_OPENBUTTON.addEventListener('click', () => DATE_DIALOG.showModal());
+
+
+DATE_DIALOG.addEventListener('close', () => {
+	if (DATE_DIALOG.returnValue === 'ok') {
+//		Next two vars need to be made global
+		START_DATE = DATE_STARTINPUT.value;
+		END_DATE = DATE_ENDINPUT.value;
+
+//		New Button text
+		if ( !START_DATE && !END_DATE ) {
+			document.querySelector('#date-picker-button').value = "Select Date Range";
+		} else {
+			document.querySelector('#date-picker-button').value = START_DATE + '...' + END_DATE;
+		}
+	}
+});
+
+
+TIME_OPEN_BUTTON.addEventListener('click', () => TIME_DIALOG.showModal());
+
+// TIME_DIALOG.addEventListener('close', () => {
+TIME_DIALOG.addEventListener('close', () => {
+	if (TIME_DIALOG.returnValue === 'ok') {
+//		Next two vars need to be made global
+		START_TIME = TIME_STARTINPUT.value;
+		END_TIME = TIME_ENDINPUT.value;
+
+		console.log('start time = ' + START_TIME)
+		console.log('end time = ' + END_TIME)
+
+//		New Button text
+		if ( !START_TIME && !END_TIME ) {
+				document.querySelector('#time-picker-button').value = "Select Time  Range";
+		} else {
+				document.querySelector('#time-picker-button').value = START_TIME + '...' + END_TIME;
+		}
+	}
+});
+
+
+
+// When GO button is clicked, get values
+document.getElementById('go-button').addEventListener('click', () => {
+
+	const bounds = map.getBounds();
+
+	const MAP_UPPER = bounds.getNorth()
+	const MAP_LOWER = bounds.getSouth()
+	const MAP_LEFT = bounds.getWest()
+	const MAP_RIGHT = bounds.getEast()
+
+
+
+	COMMENT_TEXT = document.getElementById('comment-field').value;
+
+	
+//	alert(
+//	  `Date selection : ` + START_DATE + ` ... ` + //END_DATE + `\n` +
+//	  `Time selection : ` + START_TIME + ` ... ` + END_TIME + `\n` +
+//	  `Comment        : ` + COMMENT_TEXT + `\n` + 
+//	  `LAT Coordinates: ` + MAP_LOWER + `...` + MAP_UPPER + `\n` +
+//	  `LON Coordinates:` + MAP_LEFT + `...` + MAP_RIGHT
+//	);
+
+
+//	=======================================
+//			Build Everything query
+//	=======================================
+
+//	GPS coordinates 
+//	(always defined; no need to check)
+	query = `latitude:` + MAP_LOWER + `..` + MAP_UPPER;
+	query = query + `  longitude:` + MAP_LEFT + `..` + MAP_RIGHT;
+
+
+//	Date Range
+//	(either StartDate, EndDate, both or none. Order is irrelevant)
+
+//	if (typeof variable !== 'undefined')
+	if ( typeof START_DATE !== 'undefined' || typeof END_DATE !== 'undefined'  ) {
+		query = query + `  date-taken:` + START_DATE + `..` + END_DATE
+	}
+
+//	Time Range
+//	(either Start, End, both or none. Order is relevant)
+
+//	pre-processing: time conversion
+
+
+//	Only START_TIME
+//	if ( typeof START_TIME !== 'undefined' && typeof END_TIME == 'undefined' ) {
+	if ( START_TIME && !END_TIME ) {
+		START_TIME = START_TIME.replace(":", ",")
+		query = query + `  TIMEVALUE($date-taken:)>=TIME(` + START_TIME + `,00)`
+	}
+
+//	Only END_TIME
+//	if ( typeof START_TIME == 'undefined' && typeof END_TIME == 'undefined' ) {
+	if ( !START_TIME && END_TIME ) {
+		END_TIME = END_TIME.replace(":", ",")
+		query = query + `  TIMEVALUE($date-taken:)<=TIME(` + END_TIME + `,00)`
+	}
+
+//	START_TIME as well as END_TIME
+//	if ( typeof START_TIME !== 'undefined' && typeof END_TIME !== 'undefined' ) {
+	if ( START_TIME && END_TIME ) {
+		START_TIME = START_TIME.replace(":", ",")
+		END_TIME = END_TIME.replace(":", ",")
+		TEMPRANGE = `TIMEVALUE($date-taken:)>=TIME(` + START_TIME + `,00)  TIMEVALUE($date-taken:)<=TIME(` + END_TIME + `,00)`
+
+//		Assuming every picture with GPS coordinates has a date-taken,
+//		exclude the times between endtime and starttime.
+//		i.e. start = 23 end = 1 => !< date-taken >23 AND date-taken<1 > 
+		if ( START_TIME > END_TIME ) {
+			TEMPRANGE = `< TIMEVALUE($date-taken:)>=TIME(` + START_TIME + `,00) | TIMEVALUE($date-taken:)<=TIME(` + END_TIME + `,00)>`
+		} 
+		
+		query = query + `  ` +  TEMPRANGE
+	}
+
+	
+//	No START_TIME and no END_TIME
+//	Nothing to add to the search query
+
+
+
+
+// Comment
+//	test: const input = '"big ben" london "eiffel tower" paris';
+
+//	if ( typeof COMMENT_TEXT !== 'undefined' ) {
+	if ( COMMENT_TEXT ) {
+
+		COMMENT_TEXT = COMMENT_TEXT.match(/\w+|"[^"]+"/g);
+		console.log(COMMENT_TEXT);
+
+//		Check state of Any /All radiobuttons
+		if (document.getElementById('radio-all').checked) {
+			console.log("ALL words");
+			comments = COMMENT_TEXT.toString().replaceAll(","," ");
+			console.log('comment: ' + coments );
+		}else if (document.getElementById('radio-any').checked) {
+			console.log("ANY word");
+			comments = COMMENT_TEXT.toString().replaceAll(",","|");
+			console.log('comment: ' + coments );
+		}
+
+		query = query + `  comment:<` + comments + `>`
+
+		console.log(query);
+
+
+	}
+
+
+
+
+//	=======================================
+//			Send Everything query
+//	=======================================
+
+//	Send query to Everything
+	window.location.href = `es:pic:  ` + query
+});
+
+
+
+</script>
+
+</body>
+</html>
+
