@@ -34,6 +34,9 @@ Use *Any Word* or *All Words* depending on the situation.
 
 ## Installation
 
+1. Download the release (zip-file)
+2. Extract it to a folder
+3. Done!
 
 ## Requirements
 
