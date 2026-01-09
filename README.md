@@ -10,11 +10,11 @@ Uses a map to specify the GPS coordinates to search for in Everything.
 
 Start **ViewFinder for Everything.cmd** 
   
-Drag the map to a location where the desired photos are located.  
-Use the mouse scrollwheel to zoom in/out.  
-
 Photos that are taken in the visible part of the map will be searched for.  
 The **Open in Everything** button will list them in Everything.  
+
+Drag the map to a location where the desired photos are located.  
+Use the mouse scrollwheel to zoom in/out.  
 
 Optionally adding a date range and/or time range and/or comment(s) helps to further reduce the amount of found photos.  
 <br>
