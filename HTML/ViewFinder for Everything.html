@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<title>ViewFinder for Everything 1.1</title>
+
+
+	<!-- App settings -->
+	<link rel="stylesheet" href="ViewFinder.css" />
+	<script src="ViewFinder.js"></script>
+
+
+	<!-- Leaflet -->
+	<link rel="stylesheet" href="leaflet.css" />
+	<script src="leaflet.js"></script>
+
+	<!-- User settings -->
+	<script src="UserSettings.js"></script>
+	<script>
+		if (typeof HOME_LOCATION == 'undefined') {
+			var myHome = L.latLng([48.858093, 2.294694]); // Eiffel Tower in Paris
+		} else {
+			var myHome = L.latLng( HOME_LOCATION );
+		}
+
+		function log(logText) {
+			if (DEBUG == 1) {
+				console.log(logText);
+			}
+		}
+	</script>
+
+
+
+
+	<style>
+	</style>
+
+</head>
+
+
+<body>
+
+<!------------------------------------------------------------>
+<!-------------- start HTML ---------------------------------->
+<!------------------------------------------------------------>
+
+<input 
+	id="date-picker-button"
+	type="button"
+	onclick="document.getElementById('date-dialog').showModal()"
+	value="Select Date Range"
+	title="This is the text of the tooltip &#010; Second line"
+>
+
+<input
+	id="time-picker-button"
+	type="button"
+	onclick="document.getElementById('time-dialog').showModal()"
+	value="Select Time Range"
+>
+
+<input
+	id="comment-field"
+	type="text"
+	placeholder="Search for comment ..."
+>
+
+
+<label>
+	<input
+	type="radio"
+	name="comment-radio"
+	checked="checked"
+	id="radio-all"
+	value="allwords"
+	> All Words
+</label>
+
+<label>
+	<input
+		type="radio"
+		name="comment-radio"
+		id="radio-any"
+		value="anyword"
+	> Any Word
+</label>
+
+
+<button
+	id="go-button"
+	onclick="openInEverything()"
+	>Open in Everything
+</button>
+
+<!---------------------------------------------->
+
+<dialog
+	id="date-dialog"
+	onclose="setDateButtonText();"
+>
+  <form id="date-form" method="dialog">
+    <h3>Select Date Range</h3>
+
+    <label>
+      Start date:
+      <input type="date" id="start-date">
+    </label>
+
+    <label>
+      End date:
+      <input type="date" id="end-date">
+    </label>
+
+    <menu>
+      <button value="cancel">Cancel</button>
+      <button value="ok" id="save-date">OK</button>
+    </menu>
+  </form>
+</dialog>
+
+
+
+<dialog
+	id="time-dialog"
+	onclose="log('call setTimeButtonText'); setTimeButtonText();"
+>
+  <form id="time-form" method="dialog">
+    <h3>Select Time Range</h3>
+
+    <label>
+      Start time:
+      <input type="time" id="start-time">
+    </label>
+
+    <label>
+      End time:
+      <input type="time" id="end-time">
+    </label>
+	 
+    <menu>
+      <button value="cancel">Cancel</button>
+      <button value="ok" id="save-time">OK</button>
+    </menu>
+  </form>
+</dialog>
+
+<!---------------------------------------------->
+
+<div id="main">
+	<div id="map">
+
+	<input
+		id="search-input"
+		oninput="showSearchResults(event)"
+		type="search"
+		name="q"
+		placeholder="Location e.g. paris or france"
+	>
+
+	<ul id="location-list">
+		<li>Dummy. Are items removed correctly?</li>
+	</ul>
+</div>
+
+<!---------------------------------------------->
+
+
+
+
+<!------------------------------------------------------------>
+<!-------------- end HTML ------------------------------------>
+<!------------------------------------------------------------>
+<!------------------------------------------------------------>
+
+
+
+<!-- FILTER part of script --------------------------->
+<script> 
+
+
+					
+//	=======================================
+		function setDateButtonText() {
+//	=======================================
+	if (document.getElementById('date-dialog').returnValue === 'ok') {
+//		Next two vars need to be made global
+		const startDate = document.getElementById('start-date').value;
+		const endDate = document.getElementById('end-date').value;
+
+//		New Button text
+		if ( !startDate && !endDate ) {
+			document.querySelector('#date-picker-button').value = "Select Date Range";
+		} else {
+			document.querySelector('#date-picker-button').value = startDate + '...' + endDate;
+		}
+	}			
+};
+
+
+
+//	=======================================
+		function setTimeButtonText() {
+//	=======================================
+
+	if (document.getElementById('time-dialog').returnValue === 'ok') {
+	//		Next two vars need to be made global
+		startTime = document.getElementById('start-time').value;
+		endTime = document.getElementById('end-time').value;
+
+		log('start time = ' + startTime)
+		log('end time = ' + endTime)
+
+//		New Button text
+		if ( !startTime && !endTime ) {
+				document.querySelector('#time-picker-button').value = "Select Time  Range";
+		} else {
+				document.querySelector('#time-picker-button').value = startTime + '...' + endTime;
+		}
+	}
+};
+
+
+
+
+		
+//=============================================
+		function openInEverything () {
+//=============================================
+// Builds Everything query and sends it to Everything
+// Called by event: "click "Open in Everything"
+
+	let everythingQuery = ''
+	everythingQuery += locationQuery();
+	everythingQuery += dateQuery();
+	everythingQuery += timeQuery();
+	everythingQuery += commentQuery();
+	
+	sendEverythingQuery(everythingQuery);
+
+};
+
+//=============================================
+		function locationQuery () {
+//=============================================
+
+
+	const bounds = map.getBounds();
+// Round to 4 digits ~= 10 meter ; that's good enough.
+	const geoResolution = 4;
+	const mapUpper = bounds.getNorth().toFixed(geoResolution);
+	const mapLower = bounds.getSouth().toFixed(geoResolution);
+	const mapLeft = bounds.getWest().toFixed(geoResolution);
+	const mapRight = bounds.getEast().toFixed(geoResolution);
+	
+	
+//	GPS coordinates are always defined; no need to check
+
+	const query = `  latitude:` + mapLower + `..` + mapUpper +
+	 `  longitude:` + mapLeft + `..` + mapRight;
+	
+	log(`location query = ${query}`);
+	return query
+
+};
+
+
+//=============================================
+		function dateQuery () {
+//=============================================
+//	log('start datequery');
+//	Date Range
+//	(either StartDate, EndDate, both or none. Order is irrelevant)
+	let query = '';
+
+	const startDate = document.getElementById('start-date').value;
+	const endDate = document.getElementById('end-date').value;
+
+	log(startDate);
+	log(endDate);
+
+	if ( startDate || endDate ) {
+		query = `  date-taken:` + startDate + `..` + endDate;
+	} else {
+		query = '';
+	}
+	log(`date query = ${query}`);
+	
+	return query;
+};
+
+
+
+//=============================================
+		function timeQuery () {
+//=============================================
+//	Time Range
+//	(either Start, End, both or none. Order is relevant)
+
+	let query = '';
+
+	let startTime = document.getElementById('start-time').value;
+	let endTime = document.getElementById('end-time').value;
+
+
+//	Only startTime
+	if ( startTime && !endTime ) {
+		startTime = startTime.replace(":", ",");
+		query = `  TIMEVALUE($date-taken:)>=TIME(` + startTime + `,00)`;
+	}
+
+//	Only endTime
+	if ( !startTime && endTime ) {
+		endTime = endTime.replace(":", ",");
+		query = `  TIMEVALUE($date-taken:)<=TIME(` + endTime + `,00)`;
+	}
+
+//	startTime as well as endTime
+	if ( startTime && endTime ) {
+		startTime = startTime.replace(":", ",");
+		endTime = endTime.replace(":", ",");
+
+		if ( startTime > endTime ) {
+			query = `  < TIMEVALUE($date-taken:)>=TIME(` + startTime + `,00) | TIMEVALUE($date-taken:)<=TIME(` + endTime + `,00)>`;
+		} else {
+			query = `  TIMEVALUE($date-taken:)>=TIME(` + startTime + `,00)  TIMEVALUE($date-taken:)<=TIME(` + endTime + `,00)`;
+		}
+	}
+
+	log(`time query = ${query}`);
+	return query
+};
+
+
+
+//=============================================
+		function commentQuery () {
+//=============================================
+
+	let commentText = document.getElementById('comment-field').value;
+
+	if (commentText) {
+
+		commentText = commentText.match(/\w+|"[^"]+"/g);
+		log(commentText);
+
+//		Check state of Any /All radiobuttons
+		if (document.getElementById('radio-all').checked) {
+			log("ALL words");
+			commentText = commentText.toString().replaceAll(","," ");
+		}else if (document.getElementById('radio-any').checked) {
+			log("ANY word");
+			commentText = commentText.toString().replaceAll(",","|");
+		}
+
+		query = `  comment:<` + commentText + `>`;
+
+	} else {
+		query = '';
+	}
+	log(`comment query = ${query}`);
+
+	return query
+
+};
+
+
+
+//=============================================
+		function sendEverythingQuery (query) {
+//=============================================
+//	Send query to Everything
+	window.location.href = `es:pic:` + query + `%20%20`
+
+};
+
+
+
+</script>
+<!-- END of FILTER part of script ------------------------------>
+
+
+
+
+<!-- MAP part of script ------------------------------>
+
+<script>
+
+//	List of locations to choose from
+	const ul = document.getElementById("location-list");
+// empty the location list ...
+	ul.innerHTML = '';
+
+
+//	To process asynchronous fetch(URL) queries in chronological order.
+	let queryCounter = 1;
+	let resultCounter = 0;	
+
+
+//	Icon for Home marker
+	const homeIcon = new L.Icon({
+	  iconUrl: './images/orange-home.png',
+	  iconSize: [32, 32]
+	});
+
+	var searchMarker
+
+//---------- ACTION! ----------------------------------
+
+// Initialize the map centered on the Home location
+	const map = L.map('map', {
+		center: myHome,
+		zoom:	5,
+		zoomControl: false,
+		worldCopyJump: true
+	});
+
+
+// Add OpenStreetMap tiles;
+// Use German tiles because of non-localized names (Oman, Laos, Japan, etc.)
+	L.tileLayer('https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+		attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors | ViewFinder by NotNull'
+	}).addTo(map);
+
+//	Add marker for Home location
+	const homeMarker = L.marker(myHome, {
+		icon: homeIcon
+		}).addTo(map);
+
+//	Add scale (km/miles) to map
+	L.control.scale({imperial: false}).addTo(map);
+	
+
+//----------------------------------------------------------------
+
+//=============================================
+		async function showSearchResults(event) {
+//=============================================
+
+// 2do: promise.race  inbouwen voor await response.json vs timeout = 3 sec oid.
+// dit om non-responsive queries af te vangen
+
+// 2DO Verder: Pas queryen als "typesnelheid" zakt onder de 300 ms.
+// (de tijd tussen 2 verschillende invoer)
+// Dit han door timerID te resetten.
+
+// conflicteert momenteel met queryCounter++
+// later verhogen?
+
+	log(event);
+
+
+//	If length of searchquery < 4 : don't check database
+	if (event.target.value.toString().length < MIN_QUERYLENGTH_FOR_SEARCH) {
+		ul.innerHTML = '';
+		return
+	}
+
+//	queries that come back 'out of order' (i.e. too late) will be ignored.
+// Use tempNumber, queryCounter and resultCounter to keep track.
+	const tempNumber = queryCounter;
+	queryCounter++;
+	log(`${tempNumber}.showSearchResults started`);
+
+	const searchText = encodeURIComponent(event.target.value.toString()); 
+
+	const request = `${URL}` +
+		`name_startsWith=${searchText}` +
+		`&maxRows=${MAX_ROWS}` +
+		`&username=${UID}`;
+
+	log(`${tempNumber}.request = ${request}`);
+
+
+
+	try {
+		const response = await fetch(request);
+		log(`${tempNumber}.response = ${response.status}  ${response.ok}`);
+
+		if (response.ok) { // or response.status == 200
+			const geonamesJson = await response.json();
+
+			log(`${tempNumber}.resultCounter = ${resultCounter}`);
+			
+			if (geonamesJson && tempNumber > resultCounter)
+			{
+					resultCounter = tempNumber;
+
+					buildResultlist(geonamesJson);
+
+			} else {
+				log(`${tempNumber}.Ignore because ${resultCounter} was already processed.`);
+				
+			}
+			log(`${tempNumber}.resultCounter = ${resultCounter}`);
+			
+		} else {
+			throw new Error(`FAILED. HTTP errorcode ${response.statusText}`);
+		}
+		
+	} catch(error) {
+		log(`${tempNumber}.showSearchResults error: ${error}`);
+	}
+
+
+};
+
+
+
+//=============================================
+		function buildResultlist(jsonResponse) {
+//=============================================
+
+	log('buildResultlist started');
+//	log(jsonResponse);
+		if (jsonResponse == null) {
+		// No search results
+		return;
+	};
+
+// Clear existing list, just to be sure...
+	ul.innerHTML = ''; 
+ 
+	jsonResponse.geonames.forEach((element) => {
+	//	log(`name = ${element.name}, ${element.countryName}`);
+
+	//	set the zoomlevel
+		let zoomIn = DEFAULT_ZOOM;
+		if (element.fclName.includes('city,')) {
+			zoomIn = CITY_ZOOM;
+		} else if (element.fclName.includes('country,')) {
+			zoomIn = COUNTRY_ZOOM;
+		} else if (!element.countryName) {
+			zoomIn = CONTINENT_ZOOM;
+		}
+	//		log(`zoomlevle = ${zoomIn}`);
+		
+
+	//	Add list items (including event handlers)
+	
+		ul.innerHTML += 
+		`<li
+			onclick="centerMap(${element.lat}, ${element.lng}, ${zoomIn});"
+			onmouseover="previewMap(${element.lat}, ${element.lng});"
+		 >
+			<dt>
+				<b>${element.name}</b> &nbsp; \(${element.countryName}\)
+			</dt>
+			<dt>\(${element.lat}, ${element.lng}\)</dt>
+		</li>`;
+	});
+};
+
+//=============================================
+		function centerMap(lat, lng, zoomLevel) {
+//=============================================
+
+//	2do: Should this aslo reset the query- and result- counters?
+
+	log(`centerMap started with ${lat}, ${lng}, ${zoomLevel}`);
+	if (ANIMATED_ZOOM)
+	{
+		map.flyTo( L.latLng([lat, lng]), zoomLevel);
+	} else {
+		map.setView( L.latLng([lat, lng]), zoomLevel);
+	}
+
+// empty the list ...
+	ul.innerHTML = '';
+};
+
+
+
+//=============================================
+		function previewMap(lat, lng) {
+//=============================================
+	log(`previewMap started with ${lat}, ${lng}`);
+
+	if (searchMarker) {
+//		log(`searchMarker exists: ${searchMarker}`);
+		log(`searchMarker exists: ${searchMarker}`);
+		searchMarker.setLatLng( [lat, lng] );
+	} else {
+		log(`searchMarker does not exist`);
+		searchMarker = L.marker([lat, lng]).addTo(map);
+	}
+	
+
+	map.setView( L.latLng([lat, lng]), PREVIEW_ZOOM);
+
+};
+
+ 	
+//=============================================
+//=============================================
+
+</script>
+
+</body>
+</html>
+

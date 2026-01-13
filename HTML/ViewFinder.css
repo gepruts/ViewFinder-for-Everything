@@ -1,0 +1,78 @@
+
+	label {
+		font-family: Arial, Helvetica, sans-serif;
+	}
+	
+	#date-picker-button {
+		margin: 5px;
+		padding: 8px 8px;
+      width: 14em;
+		text-align: center;
+	}
+
+	#time-picker-button {
+		margin: 5px;
+		padding: 8px 8px;
+      width: 10em;
+		text-align: center;
+	}
+
+	#comment-field {
+		margin: 10px;
+		padding: 8px 16px;
+      width: 30em;
+		text-align: left;
+	 
+	}
+
+   #go-button {
+		margin: 10px;
+		padding: 8px 16px;
+		background-color: #04AA6D;
+		float: right;
+		text-align: center;
+   }
+
+   #main {
+      height: 90vh;
+      width: 100%;
+
+	#map {
+      height: 100%;
+      width: 100%;
+		position:relative;
+	}
+
+	#search-input {
+		position: relative;
+		z-index: 2000;
+		margin-left: 40px;
+		margin-top: 10px;
+		width: 300px;
+		height: 30px;
+		font: 20px Arial, sans-serif;
+	}
+
+	#location-list {
+		position: relative;
+		z-index: 1500;
+	  list-style-type: none;
+	  margin: 0;
+	  padding: 10;
+	  min-width: 300px;
+	  max-width: 400px;
+	}		
+	
+	#location-list li {
+		margin-left: 40px;
+		margin: 1px 0px;
+		background: lightgrey;
+		padding-left: 15px;
+		padding-right: 3px;
+		padding-top: 3px;
+		padding-bottom: 3px;
+	}
+
+	#location-list li:hover {
+		background: darkgrey;
+	}
