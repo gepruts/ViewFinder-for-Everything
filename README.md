@@ -1,6 +1,6 @@
 # ViewFinder-for-Everything
 GUI frontend for geo-tagged photo search in Everything.  
-Uses a map to specify the GPS coordinates to search for in Everything.
+Search for photos taken in the visible part of the map.
 
 
 ![ViewFinder for Everything](https://github.com/user-attachments/assets/ffbcf62b-34ce-4544-91bd-05e76fad6ee9)
