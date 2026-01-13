@@ -3,8 +3,7 @@ GUI frontend for geo-tagged photo search in Everything.
 Search for photos taken in the visible part of the map.
 
 
-![ViewFinder for Everything](https://github.com/user-attachments/assets/ffbcf62b-34ce-4544-91bd-05e76fad6ee9)
-
+![ViewFinder for Everything](https://github.com/user-attachments/assets/29d26916-8ea3-43d3-8dde-ae6ea3746e01)
 
 ## How to use
 
@@ -13,9 +12,22 @@ Start **ViewFinder for Everything.cmd**
 Photos that are taken in the visible part of the map will be searched for.  
 The **Open in Everything** button will list them in Everything.  
 
-Drag the map to a location where the desired photos are located.  
-Use the mouse scrollwheel to zoom in/out.  
+### Search-as-you-type
 
+- Type the name of a place in the Location-searchbox.
+- Select one of the matching places
+- The map will zoom in on that place.
+
+
+### Other ways to zoom in on a part of the map:
+
+Drag the map to a location where the desired photos are located.  
+
+Zoom in:
+- Use the mouse scrollwheel to zoom in/out.  
+- Mark an area with SHIFT + leftmousebutton
+
+### Extra filters
 Optionally adding a date range and/or time range and/or comment(s) helps to further reduce the amount of found photos.  
 <br>
 <br>
@@ -32,11 +44,14 @@ Comments syntax (example): "eiffel tower" paris "big ben" london
 Searching for comments is case-insensitive.  
 Use *Any Word* or *All Words* depending on the situation.  
 
+
 ## Installation
 
 1. Download the release (zip-file)
 2. Extract it to a folder
-3. Done!
+3. Change the settings in **ViewFinder.ini** to your liking.
+4. Done!
+
 
 ## Requirements
 
